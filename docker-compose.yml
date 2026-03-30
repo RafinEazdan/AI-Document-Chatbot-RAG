@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    container_name: rag-chatbot
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./documents:/app/documents      # Mount your PDFs here
+      - ./vector_store:/app/vector_store # Persist FAISS index
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
