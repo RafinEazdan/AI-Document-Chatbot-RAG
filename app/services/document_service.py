@@ -22,9 +22,9 @@ class DocumentService:
         self._loader = loader
 
     async def upload_and_index(
-        self,
-        file: UploadFile,
-        embedding_manager: IEmbeddingManager,
+    self,
+    file: UploadFile,
+    embedding_manager: IEmbeddingManager,
     ) -> dict:
         """Save an uploaded file and rebuild the vector index."""
         ext = os.path.splitext(file.filename)[1].lower()
@@ -34,27 +34,23 @@ class DocumentService:
             )
 
         os.makedirs(self._config.DOCUMENT_PATH, exist_ok=True)
+
+        # Remove all existing documents before saving the new one
+        for existing_file in os.listdir(self._config.DOCUMENT_PATH):
+            existing_path = os.path.join(self._config.DOCUMENT_PATH, existing_file)
+            if os.path.isfile(existing_path):
+                os.remove(existing_path)
+
         file_path = os.path.join(self._config.DOCUMENT_PATH, file.filename)
         with open(file_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
 
         raw_text = self._loader.load_all(self._config.DOCUMENT_PATH)
         chunks = chunk_text(raw_text)
-
         embedding_manager.build_index(chunks)
         embedding_manager.save_index()
 
         return {"filename": file.filename, "total_chunks": len(chunks)}
-
-    async def reindex_all(self, embedding_manager: IEmbeddingManager) -> int:
-        """Re-index all documents in the documents directory."""
-        raw_text = self._loader.load_all(self._config.DOCUMENT_PATH)
-        chunks = chunk_text(raw_text)
-
-        embedding_manager.build_index(chunks)
-        embedding_manager.save_index()
-
-        return len(chunks)
 
     def get_index_status(self, embedding_manager: IEmbeddingManager | None) -> dict:
         """Return current index status."""

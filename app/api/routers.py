@@ -54,21 +54,6 @@ async def upload_document(
     )
 
 
-@document_router.post("/reindex", response_model=ReindexResponse)
-async def reindex_documents(
-    config: Annotated[Config, Depends(get_config)] = None,
-    embedding_manager: Annotated[IEmbeddingManager, Depends(get_embedding_manager)] = None,
-    loader: Annotated[IDocumentLoader, Depends(get_document_loader)] = None,
-):
-    """Re-index all documents in the documents/ directory."""
-    svc = DocumentService(config, loader)
-    try:
-        total_chunks = await svc.reindex_all(embedding_manager)
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return ReindexResponse(message="Re-indexed successfully.", total_chunks=total_chunks)
-
 
 @document_router.get("/status", response_model=IndexStatusResponse)
 async def index_status(
