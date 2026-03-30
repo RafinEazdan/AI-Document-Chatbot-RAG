@@ -342,20 +342,42 @@ All settings are loaded from environment variables (via `.env`):
 
 ---
 
-## Docker Deployment
+# 🐳 Docker Deployment
+
+You can run this project either by building the image locally (recommended for development) or by using the prebuilt image from Docker Hub (recommended for quick testing).
+
+## 🔹 Option 1: Build Locally (Development)
 
 ```bash
-# Build and run with Docker Compose
+# Build and run using Docker Compose
 docker-compose up --build
+```
 
-# Or manually
+Or manually:
+
+```bash
 docker build -t rag-chatbot .
-docker run -p 8000:8000 --env-file .env \
+```
+
+```bash
+docker run -p 8000:8000 \
+  --env-file .env \
   -v $(pwd)/documents:/app/documents \
   -v $(pwd)/vector_store:/app/vector_store \
   rag-chatbot
 ```
 
+## 🔹 Option 2: Run from Docker Hub (Prebuilt Image)
+
+```bash
+docker pull eazdanrafin/rag-chatbot:latest
+```
+
+```bash
+docker run -p 8000:8000 eazdanrafin/rag-chatbot:latest
+```
+
 The Docker image uses `python:3.11-slim` as the base, exposes port 8000, and mounts two volumes:
-- `documents/` — so uploaded PDFs persist across container restarts
-- `vector_store/` — so the FAISS index doesn't need to be rebuilt on restart
+- `documents/` — stores input documents for indexing
+- `vector_store/` — persists FAISS index and embeddings
+
