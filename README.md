@@ -356,7 +356,7 @@ docker-compose up --build
 Or manually:
 
 ```bash
-docker build -t rag-chatbot .
+docker build -t eazdan-rafin-rag-chatbot .
 ```
 
 ```bash
@@ -364,7 +364,7 @@ docker run -p 8000:8000 \
   --env-file .env \
   -v $(pwd)/documents:/app/documents \
   -v $(pwd)/vector_store:/app/vector_store \
-  rag-chatbot
+  eazdan-rafin-rag-chatbot
 ```
 
 The Docker image uses `python:3.11-slim` as the base, exposes port 8000, and mounts two volumes:
