@@ -371,3 +371,11 @@ The Docker image uses `python:3.11-slim` as the base, exposes port 8000, and mou
 - `documents/` — stores input documents for indexing
 - `vector_store/` — persists FAISS index and embeddings
 
+
+# Render Deployment
+
+During deployment on Render, the application exceeded the 512MB memory limit due to the embedding model and in-memory FAISS index.
+
+Since the primary goal of this project was to demonstrate the RAG pipeline and conversational behavior, I did not optimize for low-memory deployment environments.
+
+In a production setting, this could be addressed by using a lighter embedding model, external vector databases (such as. Pinecone etc), or a higher-memory hosting plan.
