@@ -47,7 +47,6 @@ async def root():
         docs_url="/docs",
         endpoints={
             "upload_document": "POST /documents/upload",
-            "reindex": "POST /documents/reindex",
             "index_status": "GET /documents/status",
             "ask_question": "POST /chat/ask",
             "clear_memory": "POST /chat/clear",
