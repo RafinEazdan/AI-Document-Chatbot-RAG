@@ -367,16 +367,6 @@ docker run -p 8000:8000 \
   rag-chatbot
 ```
 
-## 🔹 Option 2: Run from Docker Hub (Prebuilt Image)
-
-```bash
-docker pull eazdanrafin/rag-chatbot:latest
-```
-
-```bash
-docker run -p 8000:8000 eazdanrafin/rag-chatbot:latest
-```
-
 The Docker image uses `python:3.11-slim` as the base, exposes port 8000, and mounts two volumes:
 - `documents/` — stores input documents for indexing
 - `vector_store/` — persists FAISS index and embeddings
