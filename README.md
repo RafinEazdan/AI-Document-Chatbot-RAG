@@ -86,9 +86,10 @@ csn-demo/
                     ┌─────────────────────┐
                     │  Two-Tier Guard     │
                     │  ┌───────────────┐  │
-                    │  │ Tier 1: Regex │──┼──▶ Pass → continue
+                    │  │ Tier 1: Regex │──┼──▶ No match        → continue
+                    │  │               │──┼──▶ High-confidence → Block
                     │  └───────┬───────┘  │
-                    │     Suspicious?      │
+                    │   Ambiguous match?   │
                     │          ▼           │
                     │  ┌───────────────┐  │
                     │  │ Tier 2: LLM   │──┼──▶ Confirm → Block
@@ -128,13 +129,17 @@ The system implements a **layered defense** against prompt injection attacks:
 | Tier | Method | Cost | When it runs |
 |------|--------|------|-------------|
 | **Tier 1** | Regex pattern matching | Near-zero latency | Every request |
-| **Tier 2** | LLM-based classification (Gemini) | ~200ms, 1 API call | Only when Tier 1 flags the input as suspicious |
+| **Tier 2** | LLM-based classification (Gemini) | ~200ms, 1 API call | Only when Tier 1 matches an *ambiguous* pattern |
 
 **How it works:**
 
-1. **Tier 1 (Regex Guard)** — A compiled set of 40+ regex patterns checks for known injection phrases (e.g., `"ignore previous instructions"`, `"you are now"`, `"jailbreak"`, `"reveal system prompt"`, `"DAN mode"`, etc.). This is extremely fast and catches the vast majority of injection attempts with zero API cost.
+1. **Tier 1 (Regex Guard)** — 44 compiled regex patterns, split into two groups by confidence:
+   - **High-confidence** (15 patterns, e.g. `"ignore previous instructions"`, `"jailbreak"`, `"DAN mode"`, `"reveal system prompt"`) — specific attack phrasing with no plausible benign reading. A match **blocks immediately** with no LLM call.
+   - **Ambiguous** (29 patterns, e.g. `"override"`, `"act as"`, `"switch to"`, `"base64"`) — common words that also appear in legitimate questions. A match is **escalated to Tier 2**.
 
-2. **Tier 2 (LLM Guard)** — If (and only if) Tier 1 flags the input as suspicious, a secondary Gemini model (`LLM_GUARD_MODEL`) acts as a binary classifier to confirm whether the input is truly an injection attempt. This prevents false positives — legitimate questions that happen to contain flagged words (e.g., *"What is the override procedure for the safety system?"*) are allowed through.
+   A pattern's group is set offline from its precision on labelled data: every pattern that fired on a benign example in the benchmark is in the ambiguous group, as are single common words that can plausibly appear in manuals, policies or technical documents.
+
+2. **Tier 2 (LLM Guard)** — Only for ambiguous matches, a secondary Gemini model (`LLM_GUARD_MODEL`) acts as a binary classifier to confirm whether the input is truly an injection attempt. This prevents false positives — legitimate questions that happen to contain flagged words (e.g., *"What is the override procedure for the safety system?"*) are allowed through.
 
 **Why two tiers?** A regex-only guard is fast but produces false positives. An LLM-only guard is accurate but wastes API calls and latency on every request. The two-tier approach gives us the best of both: near-zero cost for clean inputs, high accuracy for ambiguous ones.
 
@@ -231,7 +236,7 @@ When a new document is uploaded, the system **deletes all existing files** from 
 
 - **Regex-only** is fast but brittle — legitimate questions containing trigger words (e.g., *"override"* in a safety manual) get blocked.
 - **LLM-only** is accurate but expensive — every request incurs an API call and ~200ms latency even for clearly benign inputs.
-- **Two-tier** combines both: regex pre-screens cheaply, LLM confirms only when needed. In practice, >95% of legitimate requests pass Tier 1 instantly, and the LLM guard only fires for genuinely ambiguous inputs.
+- **Two-tier** combines both: regex pre-screens cheaply, high-confidence attacks are blocked without an API call, and the LLM confirms only ambiguous matches — so a lenient LLM verdict cannot let an obvious attack through.
 
 ### Why dependency injection with abstract base classes?
 
